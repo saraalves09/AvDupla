@@ -1,0 +1,146 @@
+{% extends "capaivara.html" %}
+{% block titulo %}
+Profile of {{ user.username }}
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="text-center">Seu perfil: {{ user.username }}</h1>
+            <div class="text-center">
+                <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+            </div>
+
+            {% if form %}
+            <div class="mt-4">
+                <form method="post" enctype="multipart/form-data">
+                    {{ form.csrf_token }}
+
+                    <div class="form-group">
+                        {{ form.text.label(class="form-control-label") }}
+                        {{ form.text(class="form-control") }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.photo.label(class="form-control-label") }}
+                        {{ form.photo(class="form-control-file") }}
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Post</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <h6>Seus posts</h6>
+                {% for post in user.posts %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <p class="card-text">{{ post.post_text }}</p>
+                    </div>
+                    {% if post.post_img %}
+                    <img src="{{ url_for('static', filename='fotos_dos_posts/' + post.post_img) }}"
+                        class="card-img-bottom" alt="Post Image">
+                    {% endif %}
+
+
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-outline-primary like-btn" data-post-id="{{ post.id }}" disabled>
+                        <i class="fas fa-thumbs-up"></i> Like
+                        <span class="badge badge-primary">{{ post.likes|length }}</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4">
+                <h4>Posts de todos usuários (anônimos)</h4>
+
+                {% for post in posts %}
+                {% if post.user_id != user.id %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <p class="card-text">{{ post.post_text }}</p>
+                    </div>
+                    {% if post.post_img %}
+                    <img src="{{ url_for('static', filename='fotos_dos_posts/' + post.post_img) }}"
+                        class="card-img-bottom" alt="Post Image">
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-outline-primary like-btn" data-post-id="{{ post.id }}">
+                        <i class="fas fa-thumbs-up"></i> Like
+                        <span class="badge badge-primary">{{ post.likes|length }}</span>
+                    </button>
+                </div>
+                <div class="mt-3 comments-section">
+                    <h5>Comentários:</h5>
+                    {% for comment in post.comments %}
+                    <p>{{comment.text}}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="post" class="comments-form" enctype="multipart/form-data" class="mt-3">
+                    {{ formComment.csrf_token }}
+                    <input type="hidden" name="post_id" value="{{ post.id }}">
+
+                    <div class="form-group">
+                        {{ formComment.comment_text.label(class="form-control-label") }}
+                        {{ formComment.comment_text(class="form-control") }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary comment-submit"
+                        data-post-id="{{ post.id }}">Comentar</button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    $(document).ready(function () {
+        $('.like-btn').click(function () {
+            console.log('Botão clicado!');
+            var post_id = $(this).data('post-id');
+
+            $.ajax({
+                type: 'POST',
+                url: '/like/' + post_id,
+                success: function (response) {
+                    if (response.success) {
+                        $('.like-btn[data-post-id=' + post_id + '] .badge').text(response.likes);
+                    } else {
+                        console.error('Failed to like post:', response.error);
+                    }
+                },
+                error: function (error) {
+                    console.error('Failed to like post:', error);
+                }
+            });
+        });
+
+        $('.comment-submit').click(function (event) {
+            event.preventDefault();
+
+            var post_id = $(this).data('post-id');
+            var comment_text = $(this).closest('.comments-form').find('input[name="comment_text"]').val();
+
+
+            $.ajax({
+                type: 'POST',
+                url: '/add_comment/' + post_id,
+                data: { comment_text: comment_text },
+                success: function (response) {
+                    location.reload();
+                },
+                error: function (error) {
+                    console.error('Failed to add comment:', error);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
