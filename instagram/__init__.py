@@ -7,7 +7,7 @@ from flask_bootstrap import Bootstrap
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///comunidade.db'
 app.config['SECRET_KEY'] = '1786f0c45b7a2c10b359fbed5c0bb4f0'
-app.config['UPLOAD_FOLDER'] = 'static/fotos_dos_posts'
+app.config['UPLOAD_FOLDER'] = 'static/postpics'
 
 database = SQLAlchemy(app)
 bcrypt = Bcrypt(app)

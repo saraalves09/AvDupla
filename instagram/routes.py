@@ -1,4 +1,3 @@
-# Aqui vai as rotas e links
 import os
 
 from flask import render_template, redirect, url_for, jsonify, request
@@ -35,15 +34,12 @@ def login():
 @login_required
 def profile(user_id):
     if int(user_id) == int(current_user.id):
-        # estou vendo meu perfil
         _formNewPost = FormCreateNewPost()
         _formNewComment = CommentForm()
 
         if _formNewPost.validate_on_submit():
-            # pegar o texto
             _post_text = _formNewPost.text.data
 
-            # pegar a img
             _post_img = _formNewPost.photo.data
             _img_name = secure_filename(_post_img.filename)
             path = os.path.abspath(os.path.dirname(__file__))
@@ -52,13 +48,10 @@ def profile(user_id):
 
             _post_img.save(_final_path)
 
-            # criar um obj Post
             newPost = Posts(post_text=_post_text,
                            post_img=_img_name,
                            user_id=int(current_user.id)
                            )
-
-            # salvar no banco
             database.session.add(newPost)
             database.session.commit()
 
@@ -66,20 +59,8 @@ def profile(user_id):
 
         return render_template("profile.html", user=current_user, form=_formNewPost, posts=posts, formComment=_formNewComment)
     else:
-        # outro perfil"""
         _user = User.query.get(int(user_id))
         return render_template("profile.html", user=_user, form=False)
-
-
-@app.route('/capaivara')
-def capaivara():
-    return render_template("capaivara.html")
-
-
-@app.route('/teste')
-def teste():
-    return render_template("teste.html")
-
 
 @app.route('/logout')
 @login_required
@@ -95,9 +76,6 @@ def create_account():
     if formCreateAccount.validate_on_submit():
         password = formCreateAccount.password.data
         password_cr = bcrypt.generate_password_hash(password)
-        # print(password)
-        # print(password1)
-
         newUser = User(username=formCreateAccount.username.data,
                        email=formCreateAccount.email.data,
                        password=password_cr)
@@ -107,7 +85,7 @@ def create_account():
         login_user(newUser, remember=True)
         return redirect(url_for('profile', user_id=newUser.id))
 
-    return render_template("register.html", form=formCreateAccount)
+    return render_template("enroll.html", form=formCreateAccount)
 
 @app.route('/like/<int:post_id>', methods=['POST'])
 @login_required
@@ -122,7 +100,7 @@ def like(post_id):
 
             return jsonify({'success': True, 'likes': len(post.likes)})
         else:
-            return jsonify({'success': False, 'error': 'User already liked this post'}), 400
+            return jsonify({'success': False, 'error': 'You already liked this'}), 400
     else:
         return jsonify({'success': False, 'error': 'Post not found'}), 404
 
@@ -131,7 +109,7 @@ def get_comments(post_id):
     post = Posts.query.get_or_404(post_id)
     comments = post.comments
 
-    return render_template('comments_partial.html', comments=comments)
+    return render_template('parcialcmm.html', comments=comments)
 
 @app.route('/add_comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
@@ -143,4 +121,4 @@ def add_comment(post_id):
         database.session.commit()
 
     comments = post.comments
-    return render_template('comments_partial.html', comments=comments)
+    return render_template('parcialcmm.html', comments=comments)
